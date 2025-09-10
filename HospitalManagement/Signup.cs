@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -13,11 +13,13 @@ namespace HospitalManagement
 {
     public partial class Signup : Form
     {
-        SqlConnection con = new SqlConnection("Data Source=localhost\\SQLEXPRESS;Initial Catalog=HospitalDB;Integrated Security=True;TrustServerCertificate=True");
+        //SqlConnection con = new SqlConnection("Data Source=localhost\\SQLEXPRESS;Initial Catalog=HospitalDB;Integrated Security=True;TrustServerCertificate=True");
 
         public Signup()
         {
             InitializeComponent();
+            PasswordTextBox.UseSystemPasswordChar = true;
+            ConfirmPasswordTextBox.UseSystemPasswordChar = true;
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -50,7 +52,27 @@ namespace HospitalManagement
 
             AgeTextBox.Text = age.ToString();
         }
+        //pass things
+        private bool HasSpecialChar(string password)
+        {
+            return password.Any(ch => !char.IsLetterOrDigit(ch));
+        }
 
+        private bool HasUpperCase(string password)
+        {
+            return password.Any(ch => char.IsUpper(ch));
+        }
+
+        private bool HasLowerCase(string password)
+        {
+            return password.Any(ch => char.IsLower(ch));
+        }
+
+        private bool HasNumber(string password)
+        {
+            return password.Any(ch => char.IsDigit(ch));
+        }
+        //pass thing ends here 
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
 
@@ -69,10 +91,12 @@ namespace HospitalManagement
         private void button2_Click(object sender, EventArgs e)
         {
             FullNameTextBox.Text = "";
+            AgeTextBox.Text = "";
             ContactTextBox.Text = "";
             BloodGroupComboBox.Text = "";
             UsernameTextBox.Text = "";
             PasswordTextBox.Text = "";
+            ConfirmPasswordTextBox.Text = "";
 
             if (GenderComboBox.Items.Count > 0)
             {
@@ -97,7 +121,7 @@ namespace HospitalManagement
 
         private void Proceed_Click(object sender, EventArgs e)
         {
-            // Validation check (use OR instead of AND)
+            // 1️⃣ Check if ALL fields are empty
             if (FullNameTextBox.Text == "" &&
                 DOB_DTP.CustomFormat == "'Select'" &&
                 GenderComboBox.Text == "Select" &&
@@ -105,37 +129,84 @@ namespace HospitalManagement
                 ContactTextBox.Text == "" &&
                 CategoryComboBox.Text == "Select" &&
                 UsernameTextBox.Text == "" &&
-                PasswordTextBox.Text == "")
+                PasswordTextBox.Text == "" &&
+                ConfirmPasswordTextBox.Text == "")
             {
                 MessageBox.Show("Please fill out all fields before proceeding.");
                 return;
             }
 
-            // Make sure UserId is first, then all other fields
-            string insert_query = "INSERT INTO Users (FullName, DOB, Gender, BloodGroup, Contact, Category, Username, Password) VALUES ('"
-    + FullNameTextBox.Text + "', '"
-    + DOB_DTP.Value.ToString("yyyy-MM-dd") + "', '"
-    + GenderComboBox.Text + "', '"
-    + BloodGroupComboBox.Text + "', '"
-    + ContactTextBox.Text + "', '"
-    + CategoryComboBox.Text + "', '"
-    + UsernameTextBox.Text + "', '"
-    + PasswordTextBox.Text + "')";
+            // 2️⃣ Password validation only if both password fields are not empty
+            string password = PasswordTextBox.Text.Trim();
+            string confirmPassword = ConfirmPasswordTextBox.Text.Trim();
 
-
-
-            try
+            if (password == "" || confirmPassword == "")
             {
-                con.Open();
-                SqlCommand cmd = new SqlCommand(insert_query, con);
-                cmd.ExecuteNonQuery();
-                con.Close();
-
-                MessageBox.Show("Account created successfully!");
+                MessageBox.Show("Please enter and confirm your password.");
+                return;
             }
-            catch (Exception ex)
+
+            if (password != confirmPassword)
             {
-                MessageBox.Show("Error: " + ex.Message);
+                MessageBox.Show("Passwords do not match");
+                return;
+            }
+
+            if (password.Length < 6)
+            {
+                MessageBox.Show("Password must be at least 6 characters long.");
+                return;
+            }
+
+            if (!HasUpperCase(password))
+            {
+                MessageBox.Show("Password must contain at least one uppercase letter.");
+                return;
+            }
+
+            if (!HasLowerCase(password))
+            {
+                MessageBox.Show("Password must contain at least one lowercase letter.");
+                return;
+            }
+
+            if (!HasNumber(password))
+            {
+                MessageBox.Show("Password must contain at least one number.");
+                return;
+            }
+
+            if (!HasSpecialChar(password))
+            {
+                MessageBox.Show("Password must contain at least one special character.");
+                return;
+            }
+
+            // ✅ All validations passed
+            MessageBox.Show("Account created successfully!");
+        }
+
+
+        // ✅ Password verification done
+
+
+
+        private void ConfirmPasswordTextBox_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ShowPassword_CheckedChanged(object sender, EventArgs e)
+        {
+            if (ShowPassword.Checked)
+            {
+                PasswordTextBox.UseSystemPasswordChar = false;
+                ConfirmPasswordTextBox.UseSystemPasswordChar = false;
+            }
+            else
+            {
+                PasswordTextBox.UseSystemPasswordChar = true;
+                ConfirmPasswordTextBox.UseSystemPasswordChar = true;
             }
         }
     }
